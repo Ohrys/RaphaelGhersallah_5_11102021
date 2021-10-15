@@ -18,56 +18,47 @@ function getProduct(id) {
         })
 }
 
+/* Affiche le produit obtenu via l'api 
+ * @param {Product} product - objet obtenu via la fonction getProduct
+ */
 function displayProduct(product){
-    const containerProduct = document.getElementsByTagName("article")[0];
+    document.getElementsByClassName('item__img')[0].innerHTML = `<img src="${product.imageUrl}" alt="${product.altTxt}">`;
+    document.getElementById('title').innerHTML = product.name;
+    document.getElementById('price').innerHTML = product.price;
+    document.getElementById('description').innerHTML = product.description;
     
-    containerProduct.innerHTML =
-    `
-        <div class="item__img">
-            <img src="${product.imageUrl}" alt="${product.altTxt}">
-        </div>
-        <div class="item__content">
-
-            <div class="item__content__titlePrice">
-                <h1 id="title">${product.name}</h1>
-                <p>Prix : <span id="price">${product.price}</span>€</p>
-            </div>
-
-            <div class="item__content__description">
-                <p class="item__content__description__title">Description :</p>
-                <p id="description">${product.description}</p>
-            </div>
-
-            <div class="item__content__settings">
-                <div class="item__content__settings__color">
-                    <label for="color-select">Choisir une taille :</label>
-                        <select name="color-select" id="colors">
-                            <!-- va falloir se creuser un peu la tête pour les options -->
-                        </select>
-                </div>
-
-                <div class="item__content__settings__quantity">
-                    <label for="itemQuantity">Nombre d'article(s) (1-100) :</label>
-                    <input type="number" name="itemQuantity" min="1" max="100" value="0" id="quantity">
-                </div>
-            </div>
-
-            <div class="item__content__addButton">
-                <button id="addToCart">Ajouter au panier</button>
-            </div>
-
-        </div>
-    `  
-
     product.colors.forEach(color => {
         const selectColor = document.getElementById("colors")
         selectColor.innerHTML +=
-        `<option value="${color}">${color}</option>`
+            `<option value="${color}">${color}</option>`
     });
 }
+
+/* 
+ * stocke dans le localStorage sous une clé de la forme index_couleur la quantité d'un produit d'une couleur définie.
+ */
+function addToCart(){
+    var color = document.getElementById('colors').value;
+    var quantity = document.getElementById('quantity').value;
+    if(color !== ""){
+        index = idProduct + '_' + color;
+        if(localStorage[index]){
+            localStorage[index] = parseInt(localStorage[index],10) + parseInt(quantity,10);
+        }else{
+            localStorage[index] = parseInt(quantity, 10);
+        }
+    }else{
+        console.error('la couleur n\'est pas définie.');
+    }
+    
+}
+
 
 /* début du script */
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-id = urlParams.has("id")?urlParams.get("id"):-1;
-getProduct(id);
+const idProduct = urlParams.has("id")?urlParams.get("id"):-1;
+document.addEventListener('DOMContentLoaded', getProduct(idProduct));
+
+document.getElementById('addToCart').addEventListener('click', addToCart);
+

@@ -6,6 +6,8 @@ function getAllProducts(){
     .then(function(res){
         if(res.ok){
             return res.json();
+        }else{
+            throw new Error("données non collectées");
         }
     })
     .then(function(values){
@@ -13,11 +15,11 @@ function getAllProducts(){
     })
     .catch(function(err){
         //une erreur est survenue
-        console.log("une erreur est survenue", err.message);
+        console.error("une erreur est survenue", err.message);
     })
 }
 
-/*
+/* Affiche la listes des produits obtenus via l'api.
  * @param {Products []} products - Renvoie l'array d'objet products issu de getAllProducts
  */
 function productsDisplay(products){
@@ -40,4 +42,4 @@ function productsDisplay(products){
 
 
 /* début du script */
-getAllProducts();
+document.addEventListener('DOMContentLoaded',getAllProducts());
