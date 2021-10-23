@@ -28,7 +28,7 @@ function displayProduct(product){
     document.getElementById('description').innerHTML = product.description;
     
     product.colors.forEach(color => {
-        const selectColor = document.getElementById("colors")
+        selectColor = document.getElementById("colors")
         selectColor.innerHTML +=
             `<option value="${color}">${color}</option>`
     });
@@ -38,26 +38,63 @@ function displayProduct(product){
  * stocke dans le localStorage sous une clé de la forme index_couleur la quantité d'un produit d'une couleur définie.
  */
 function addToCart(){
-    var color = document.getElementById('colors').value;
-    var quantity = document.getElementById('quantity').value;
+    color = document.getElementById('colors').value;
+    quantity = document.getElementById('quantity').value;
     if(color !== ""){
         index = idProduct + '_' + color;
         if(localStorage[index]){
             localStorage[index] = parseInt(localStorage[index],10) + parseInt(quantity,10);
+            confirmationAjout();
         }else{
+            quantity = (quantity>100)?100:
+                        (quantity<=0)?1:quantity;
             localStorage[index] = parseInt(quantity, 10);
+            confirmationAjout();
         }
     }else{
-        console.error('la couleur n\'est pas définie.');
+        alert('Attention : la couleur n\'est pas définie.');
     }
     
 }
 
+function confirmationAjout(){
+    bandeau = document.createElement('div');
+    bandeau.innerHTML = "Article ajouté au panier";
+    bandeau.id = "confirmation";
+    bandeau.style =    `background-color: var(--main-color);\
+                                position: absolute;\
+                                left: 0;\
+                                top: ${window.scrollY+100}px;\
+                                width: 100%;\
+                                height: 3em;\
+                                font-size: 2em;\
+                                box-shadow: 1px 1px 5px black;\
+                                display: flex;\
+                                justify-content: center;\
+                                align-items: center;\
+                                opacity: 1;`;
+    header = document.getElementsByTagName('header')[0];
+    document.body.insertBefore(bandeau,header);
+    fadeOut(document.getElementById('confirmation'));
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+async function fadeOut(element){
+    await sleep(1000);
+    while(element.style.opacity>0){
+        element.style.opacity-=.1;
+        await sleep(25);
+    }
+}
+
+
 
 /* début du script */
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const idProduct = urlParams.has("id")?urlParams.get("id"):-1;
+queryString = window.location.search;
+urlParams = new URLSearchParams(queryString);
+idProduct = urlParams.has("id")?urlParams.get("id"):-1;
 document.addEventListener('DOMContentLoaded', getProduct(idProduct));
 
 document.getElementById('addToCart').addEventListener('click', addToCart);

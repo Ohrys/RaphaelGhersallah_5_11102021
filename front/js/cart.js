@@ -4,13 +4,13 @@
  * @return {Object []} liste - une array de la forme [[Product,'color','quantity']]
 */
 async function recupererPanier(){
-    var listResult = [];
-    for (var i = 0 ; i < localStorage.length ; i++){
-        var index = localStorage.key(i);
-        var idProduct = index.split('_')[0];
-        var colorProduct = index.split('_')[1];
-        var quantityProduct = parseInt(localStorage.getItem(index),10);
-        var product = await getProduct(idProduct);
+    listResult = [];
+    for (i = 0 ; i < localStorage.length ; i++){
+        index = localStorage.key(i);
+        idProduct = index.split('_')[0];
+        colorProduct = index.split('_')[1];
+        quantityProduct = parseInt(localStorage.getItem(index),10);
+        product = await getProduct(idProduct);
         listResult.push([product,colorProduct,quantityProduct]);
     }
 
@@ -23,8 +23,8 @@ async function recupererPanier(){
  * @return {Product} product - un objet product.  
  */
 async function getProduct(id){
-    const response = await fetch("http://localhost:3000/api/products/"+id);
-    var product =  await response.json();
+    response = await fetch("http://localhost:3000/api/products/"+id);
+    product =  await response.json();
     return product;
 }
 
@@ -33,9 +33,9 @@ async function getProduct(id){
  *
  */
 function displayPanier(list){
-    var containerCart = document.getElementById('cart__items');
+    containerCart = document.getElementById('cart__items');
     list.forEach((item) => {
-        var product = item[0];
+        product = item[0];
         containerCart.innerHTML += 
             `<article class="cart__item" data-id="${product._id}">
                 <div class="cart__item__img">
@@ -44,7 +44,7 @@ function displayPanier(list){
                 <div class="cart__item__content">
                     <div class="cart__item__content__titlePrice">
                         <h2>${product.name} - ${item[1]}</h2>
-                        <p>${product.price}</p>
+                        <p>${product.price * item[2]}</p>
                     </div>
                     <div class="cart__item__content__settings">
                         <div class="cart__item__content__settings__quantity">
@@ -62,11 +62,17 @@ function displayPanier(list){
 
     //Ajout de l'evenement sur la quantité
     listQ = document.getElementsByClassName('itemQuantity');
-    for( var i = 0 ; i < listQ.length ; i++){
+    for(i = 0 ; i < listQ.length ; i++){
         listQ[i].addEventListener('change', (event) => {
-            
+            //On vérifie la quantité : si la valeur est au dessus de 100 et si elle est inférieur à 1 on l'inverse. 
+            quantity = (event.target.value>100)?100:
+                (event.target.value<=0)?1:event.target.value;
             //1. éditer la valeur de l'item. 
-            event.target.setAttribute('value',event.target.value);
+            event.target.setAttribute('value',quantity);
+
+            //2. On met à jour le prix de l'objet 
+            price = event.target.closest(".cart__item__content");
+            price.querySelector('.cart__item__content__titlePrice p').innerHTML = product.price * quantity;
 
             //on récupère la couleur pour composer la clé de localStorage (de la forme : 'id'_'couleur')
             color = event.target.closest('.cart__item__content');
@@ -74,7 +80,7 @@ function displayPanier(list){
             index = event.target.closest('article').getAttribute('data-id')+"_"+color;
             
             //2. éditer la valeur dans le localStorage
-            localStorage.setItem(index, parseInt(event.target.value, 10));
+            localStorage.setItem(index, parseInt(quantity, 10));
 
             //3. actualiser le prix et les quantités. 
             calculTotal();
@@ -85,7 +91,7 @@ function displayPanier(list){
     //Ajout de l'evenement sur la suppression
     listD = document.getElementsByClassName('deleteItem');
 
-    for( var i = 0; i< listD.length ; i++){
+    for(i = 0; i< listD.length ; i++){
         
         listD[i].addEventListener('click', (event)=>{
             //supprimer son entrée du localStorage
@@ -109,16 +115,20 @@ function displayPanier(list){
  *
  */
 function calculTotal(){
-    var listQ = document.getElementsByClassName('itemQuantity');
-    var qTotal = 0;
-    var pTotal = 0;
-    for (var i = 0; i < listQ.length; i++) {
+    listQ = document.getElementsByClassName('itemQuantity');
+    qTotal = 0;
+    pTotal = 0;
+    for (i = 0; i < listQ.length; i++) {
         //on récupère le prix.
         price = listQ[i].closest('.cart__item__content');
         price = parseInt(price.querySelector('p').innerHTML,10);
 
-        qTotal += parseInt(listQ[i].value,10);
-        pTotal += parseInt(listQ[i].value,10) * price;
+        quantity = listQ[i].value;
+        quantity = (quantity>100)?100:
+                    (quantity<=0)?1:quantity;
+
+        qTotal += parseInt(quantity,10);
+        pTotal += price;
     }
 
     document.getElementById('totalQuantity').innerHTML = qTotal;
