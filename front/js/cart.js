@@ -110,7 +110,6 @@ function displayPanier(list){
     }
 }
 
-
 /* calcul la quantité totale et le montant total du panier en parcours le panier.
  *
  */
@@ -137,5 +136,75 @@ function calculTotal(){
     
 }
 
+/* Vérifie les champs afin de s'assurer l'absence d'erreurs, construit l'objet contact si la valeur est correcte. 
+ * Envoie un objet contact avec les informations et le tableaux des produits à [À FAIRE]. 
+ */
+function verificationFormulaire(event){
+    let nomChamps = [];
+    let contact= [];
+    let error = false;
+    for (i = 0; i < document.querySelectorAll('label').length;i++){
+        nomChamps.push(document.querySelectorAll('label')[i].getAttribute('for'));
+    }
+    nomChamps.forEach(nomChamp => {
+        let pattern = '';
+        switch (nomChamp) {
+            case 'firstName':
+                /*match un mot, avec une liaison '-', avec accent, sans caractère numérique*/
+                pattern = /^[a-zA-ZÜ-ü-]+$/;
+                erreur = 'Votre prénom sans espace ni chiffre. Accents autorisés.'
+                break;
+            case 'lastName':
+                pattern = /^[a-zA-ZÜ-ü-]+$/;
+                erreur = 'Votre nom sans espace, ni chiffre. Accents autorisés.'
+                break;
+            case 'address':
+                /*match une adresse de la forme '123 mot[...]' où mot ne peut contenir de chiffre ou de caractère spéciaux excepté le trémas*/
+                pattern = /^[0-9]{1,3}[^;_><'"`\t\n\P\d]+$/;
+                erreur = 'Votre adresse de la forme : "123 rue Dupont"'
+                break;
+            case 'city':
+                pattern = /^[a-zA-ZÜ-ü-]+$/;
+                erreur = 'Votre ville sans espace ni chiffre. Accents autorisés.'
+                break;
+            case 'email':
+                /*match une adresse mail pouvant : 
+                    * - contenir dans sa première partie, des mots, des chiffres, un tiret, un point ou un underscore.
+                    * - l'arobase est nécessaire 
+                    * - suivit d'un ou plusieurs mot séparé par des underscore.
+                    * - suivit d'un point
+                    * - suivit d'un groupement de 2 ou 3 lettres maximum
+                    */ 
+                pattern = /^[a-zA-Z0-9\.\-_]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+                erreur = 'Votre adresse mail de la forme "john@doe.fr".'
+                break;
+            default:
+                break;
+        }
+        
+        let value = document.getElementById(nomChamp).value;
+        if(!pattern.test(value)){
+            document.getElementById(nomChamp + 'ErrorMsg').innerHTML = "champ incorrect : "+erreur;
+            error = true;
+            event.preventDefault();
+        }else{
+            if (document.getElementById(nomChamp + 'ErrorMsg').innerHTML.length>0){
+                document.getElementById(nomChamp + 'ErrorMsg').innerHTML = '';
+            }
+            contact[nomChamp]=value;
+        }
+    });
+
+    if(!error){
+        //donner à la fonction d'envoi de commande(à faire) l'object contact et le tableaux de produits(à construire).
+        console.log(typeof contact);
+        console.log(contact);
+        event.preventDefault();//pour montrer l'objet (temporaire)
+    }
+}
+
+
+/* début du script */
 recupererPanier();
+document.getElementById('order').addEventListener('click',verificationFormulaire);
 

@@ -57,6 +57,9 @@ function addToCart(){
     
 }
 
+/* Crée un bandeau qui s'efface indiquant que le produit a été ajouté au panier. 
+ *
+ */
 function confirmationAjout(){
     bandeau = document.createElement('div');
     bandeau.innerHTML = "Article ajouté au panier";
@@ -64,7 +67,7 @@ function confirmationAjout(){
     bandeau.style =    `background-color: var(--main-color);\
                                 position: absolute;\
                                 left: 0;\
-                                top: ${window.scrollY+100}px;\
+                                top: ${window.scrollY}px;\
                                 width: 100%;\
                                 height: 3em;\
                                 font-size: 2em;\
@@ -78,15 +81,24 @@ function confirmationAjout(){
     fadeOut(document.getElementById('confirmation'));
 }
 
+/* Crée une pause durant ms milliseconde
+ * @param { number } ms - Nombre de milliseconde.
+ * @return { Promise } 
+ */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/* Fait disparaître l'élément par un effet de fondu
+ * @param { Node } element - element dont l'opacité doit être réduite
+ */
 async function fadeOut(element){
     await sleep(1000);
     while(element.style.opacity>0){
         element.style.opacity-=.1;
         await sleep(25);
     }
+    document.body.removeChild(element);
 }
 
 
