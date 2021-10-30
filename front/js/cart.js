@@ -1,21 +1,20 @@
-
 /* Récupère la liste des product contenu dans la table et les renvoie sous forme de tableau d'objet de la forme ['key','color','quantity']
  *
- * @return {Object []} liste - une array de la forme [[Product,'color','quantity']]
+ * @return {Object []} listProduct - une array de la forme [[Product,'color','quantity']]
 */
-async function recupererPanier(){
-    listResult = [];
+async function retrieveCart(){
+    let listResult = [];
     for (i = 0 ; i < localStorage.length ; i++){
-        index = localStorage.key(i);
-        idProduct = index.split('_')[0];
-        colorProduct = index.split('_')[1];
-        quantityProduct = parseInt(localStorage.getItem(index),10);
-        product = await getProduct(idProduct);
+        let index = localStorage.key(i);
+        let idProduct = index.split('_')[0];
+        let colorProduct = index.split('_')[1];
+        let quantityProduct = parseInt(localStorage.getItem(index),10);
+        let product = await getProduct(idProduct);
         listResult.push([product,colorProduct,quantityProduct]);
     }
 
     //affiche les éléments un par un. 
-    displayPanier(listResult);
+    displayCart(listResult);
 }
 
 /* Retourne un objet Produit en consultant l'api
@@ -23,8 +22,8 @@ async function recupererPanier(){
  * @return {Product} product - un objet product.  
  */
 async function getProduct(id){
-    response = await fetch("http://localhost:3000/api/products/"+id);
-    product =  await response.json();
+    let response = await fetch("http://localhost:3000/api/products/"+id);
+    let product =  await response.json();
     return product;
 }
 
@@ -32,10 +31,10 @@ async function getProduct(id){
  * @param {Array[]} list - liste aux éléments de la forme [Product, color, quantity] issu de recupererListe()
  *
  */
-function displayPanier(list){
-    containerCart = document.getElementById('cart__items');
+function displayCart(list){
+    let containerCart = document.getElementById('cart__items');
     list.forEach((item) => {
-        product = item[0];
+        let product = item[0];
         containerCart.innerHTML += 
             `<article class="cart__item" data-id="${product._id}">
                 <div class="cart__item__img">
@@ -44,7 +43,7 @@ function displayPanier(list){
                 <div class="cart__item__content">
                     <div class="cart__item__content__titlePrice">
                         <h2>${product.name} - ${item[1]}</h2>
-                        <p>${product.price * item[2]}</p>
+                        <p>${product.price * item[2]} €</p>
                     </div>
                     <div class="cart__item__content__settings">
                         <div class="cart__item__content__settings__quantity">
@@ -58,54 +57,64 @@ function displayPanier(list){
                 </div>
             </article>`;
     });  
-    calculTotal();
+    totalCalcul();
 
     //Ajout de l'evenement sur la quantité
-    listQ = document.getElementsByClassName('itemQuantity');
+    let listQ = document.getElementsByClassName('itemQuantity');
     for(i = 0 ; i < listQ.length ; i++){
+        let quantity = listQ[i].value;
+
         listQ[i].addEventListener('change', (event) => {
-            //On vérifie la quantité : si la valeur est au dessus de 100 et si elle est inférieur à 1 on l'inverse. 
-            quantity = (event.target.value>100)?100:
-                (event.target.value<=0)?1:event.target.value;
+            /*On vérifie la quantité : 
+             * - si la valeur est au dessus de 100 et si elle est inférieur à 1,
+             *   => on restaure l'ancienne valeur et on alerte l'utilisateur que la valeur est incorrecte.
+             */
+            if(event.target.value>100 || event.target.value <= 0){
+                alert('La quantité doit être comprise entre 1 et 100.');
+                event.target.value = quantity;
+            }else{
+                quantity = event.target.value;
+            }
+
             //1. éditer la valeur de l'item. 
             event.target.setAttribute('value',quantity);
 
             //2. On met à jour le prix de l'objet 
-            price = event.target.closest(".cart__item__content");
-            price.querySelector('.cart__item__content__titlePrice p').innerHTML = product.price * quantity;
+            let price = event.target.closest(".cart__item__content");
+            price.querySelector('.cart__item__content__titlePrice p').innerHTML = product.price * quantity + ' €';
 
             //on récupère la couleur pour composer la clé de localStorage (de la forme : 'id'_'couleur')
-            color = event.target.closest('.cart__item__content');
+            let color = event.target.closest('.cart__item__content');
             color = color.querySelector('h2').innerHTML.split('- ')[1];
-            index = event.target.closest('article').getAttribute('data-id')+"_"+color;
+            let index = event.target.closest('article').getAttribute('data-id')+"_"+color;
             
             //2. éditer la valeur dans le localStorage
             localStorage.setItem(index, parseInt(quantity, 10));
 
             //3. actualiser le prix et les quantités. 
-            calculTotal();
+            totalCalcul();
         });
     }
     
 
     //Ajout de l'evenement sur la suppression
-    listD = document.getElementsByClassName('deleteItem');
+    let listD = document.getElementsByClassName('deleteItem');
 
     for(i = 0; i< listD.length ; i++){
         
         listD[i].addEventListener('click', (event)=>{
             //supprimer son entrée du localStorage
             //on compose la clé localStorage
-            color = event.target.closest('.cart__item__content');
+            let color = event.target.closest('.cart__item__content');
             color = color.querySelector('h2').innerHTML.split('- ')[1];
-            index = event.target.closest('article').getAttribute('data-id') + "_" + color;
+            let index = event.target.closest('article').getAttribute('data-id') + "_" + color;
             localStorage.removeItem(index);
 
             //supprimer l'élément visible
             event.target.closest('article').remove();
 
             //recalculer le prix
-            calculTotal();
+            totalCalcul();
         })
     }
 }
@@ -113,18 +122,16 @@ function displayPanier(list){
 /* calcul la quantité totale et le montant total du panier en parcours le panier.
  *
  */
-function calculTotal(){
-    listQ = document.getElementsByClassName('itemQuantity');
-    qTotal = 0;
-    pTotal = 0;
+function totalCalcul(){
+    let listQ = document.getElementsByClassName('itemQuantity');
+    let qTotal = 0;
+    let pTotal = 0;
     for (i = 0; i < listQ.length; i++) {
         //on récupère le prix.
-        price = listQ[i].closest('.cart__item__content');
+        let price = listQ[i].closest('.cart__item__content');
         price = parseInt(price.querySelector('p').innerHTML,10);
 
-        quantity = listQ[i].value;
-        quantity = (quantity>100)?100:
-                    (quantity<=0)?1:quantity;
+        let quantity = listQ[i].value;
 
         qTotal += parseInt(quantity,10);
         pTotal += price;
@@ -139,72 +146,133 @@ function calculTotal(){
 /* Vérifie les champs afin de s'assurer l'absence d'erreurs, construit l'objet contact si la valeur est correcte. 
  * Envoie un objet contact avec les informations et le tableaux des produits à [À FAIRE]. 
  */
-function verificationFormulaire(event){
-    let nomChamps = [];
-    let contact= [];
+function checkForm(event){
+    let inputNames = [];
+    let contact = new Object();
+    let products= [];
     let error = false;
     for (i = 0; i < document.querySelectorAll('label').length;i++){
-        nomChamps.push(document.querySelectorAll('label')[i].getAttribute('for'));
+        inputNames.push(document.querySelectorAll('label')[i].getAttribute('for'));
     }
-    nomChamps.forEach(nomChamp => {
+    inputNames.forEach(inputName => {
         let pattern = '';
-        switch (nomChamp) {
+        let errorMsg = '';
+        switch (inputName) {
             case 'firstName':
-                /*match un mot, avec une liaison '-', avec accent, sans caractère numérique*/
-                pattern = /^[a-zA-ZÜ-ü-]+$/;
-                erreur = 'Votre prénom sans espace ni chiffre. Accents autorisés.'
+                /*un prénom ne peut pas : contenir de chiffre, de symbole autre que le tiret, d'apostrophe.*/
+                pattern = /^[a-zA-ZÜ-ü-\s]+$/;
+                errorMsg = 'Votre prénom ne peut contenir des chiffres ou de caractères spéciaux.'
                 break;
             case 'lastName':
-                pattern = /^[a-zA-ZÜ-ü-]+$/;
-                erreur = 'Votre nom sans espace, ni chiffre. Accents autorisés.'
+                /*un nom peut contenir une particule (de, des, d',...), des accents, des espaces, des caractères alphabétiques minuscules et majuscules*/
+                pattern = /^[a-zA-ZÜ-ü-\s']+$/;
+                errorMsg = 'Votre nom sans espace, ni chiffre. Accents autorisés.'
                 break;
             case 'address':
-                /*match une adresse de la forme '123 mot[...]' où mot ne peut contenir de chiffre ou de caractère spéciaux excepté le trémas*/
-                pattern = /^[0-9]{1,3}[^;_><'"`\t\n\P\d]+$/;
-                erreur = 'Votre adresse de la forme : "123 rue Dupont"'
+                /*Une adresse de la forme : 
+                    - groupement <=3 chiffres (n° de rue)
+                    - 1 ou plusieurs mots. (e.g : rue du ...)
+                    - Potentiellement :
+                        - groupement <=4 chiffres 
+                    Ex : 123 Rue du Pont-couvert Bâtiment 5C Appartement 3
+                */
+                pattern = /^[0-9]{1,3}([a-zA-ZÜ-ü-\s]+([0-9]{1,4})?)+$/;
+                
+                errorMsg = 'Votre adresse ne peut contenir de caractère spéciaux autre qu\'un tiret'
                 break;
             case 'city':
-                pattern = /^[a-zA-ZÜ-ü-]+$/;
-                erreur = 'Votre ville sans espace ni chiffre. Accents autorisés.'
+                /*Une ville de la forme : [codePostal ]nom. Où nom peut contenir accent et tiret sans espace ni chiffre.*/ 
+                pattern = /^([0-9]{5}\s)?[a-zA-ZÜ-ü-]+$/;
+                errorMsg = 'le nom de ville ne peut contenir d\'accent, d\'espace ou de caractères spéciaux. Le code postal peut être précisé au début séparé par un espace.'
                 break;
             case 'email':
-                /*match une adresse mail pouvant : 
-                    * - contenir dans sa première partie, des mots, des chiffres, un tiret, un point ou un underscore.
-                    * - l'arobase est nécessaire 
-                    * - suivit d'un ou plusieurs mot séparé par des underscore.
-                    * - suivit d'un point
-                    * - suivit d'un groupement de 2 ou 3 lettres maximum
-                    */ 
-                pattern = /^[a-zA-Z0-9\.\-_]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
-                erreur = 'Votre adresse mail de la forme "john@doe.fr".'
+                /*match une adresse correspondant au pattern : 
+                *   - contenir dans sa première partie, des mots, des chiffres, un tiret, un point ou un underscore.
+                *   - l'arobase est nécessaire 
+                *   - suivit d'un ou plusieurs mot séparé par des underscore ou des tiret.
+                *   - suivit d'un point
+                *   - suivit d'un groupement de 2 lettres minimum pour le domaine
+                */ 
+                pattern = /^[a-zA-Z0-9\.\-_]+@[a-zA-Z_-]+\.[a-zA-Z\.]{2,}$/;
+                errorMsg = 'Votre adresse mail de la forme "john@doe.fr".'
                 break;
             default:
                 break;
         }
         
-        let value = document.getElementById(nomChamp).value;
+        let value = document.getElementById(inputName).value;
         if(!pattern.test(value)){
-            document.getElementById(nomChamp + 'ErrorMsg').innerHTML = "champ incorrect : "+erreur;
+            document.getElementById(inputName + 'ErrorMsg').innerHTML = "champ incorrect : "+ errorMsg;
             error = true;
             event.preventDefault();
         }else{
-            if (document.getElementById(nomChamp + 'ErrorMsg').innerHTML.length>0){
-                document.getElementById(nomChamp + 'ErrorMsg').innerHTML = '';
+            if (document.getElementById(inputName + 'ErrorMsg').innerHTML.length>0){
+                document.getElementById(inputName + 'ErrorMsg').innerHTML = '';
             }
-            contact[nomChamp]=value;
+
+            contact[inputName]=value.trim();
         }
     });
 
     if(!error){
         //donner à la fonction d'envoi de commande(à faire) l'object contact et le tableaux de produits(à construire).
-        console.log(typeof contact);
-        console.log(contact);
-        event.preventDefault();//pour montrer l'objet (temporaire)
+        products = retrieveProductIdCart();
+        
+        
+        //Récupération du panier (juste les id ...)
+        if(contact != null && products != null ){
+            orderCart(contact,products);
+            //pour montrer l'objet (temporaire)
+        }
+        event.preventDefault();
     }
 }
 
+/* Récupère les id des items contenus dans le panier et renvoie un talbeau les contenant
+ * 
+ *  @return { String[] } products - array contenant les id des produits stockés dans le panier.
+ */
+function retrieveProductIdCart(){
+    let items = document.getElementsByClassName('cart__item');
+    let products = [];
+    for(i = 0 ; i < items.length ; i++){
+        products.push(items[i].dataset.id);
+    }
+
+    return products;
+}
+
+function orderCart(contact, products){
+    fetch(" http://localhost:3000/api/products/order", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contact : contact,
+            products : products
+        })
+    })
+    .then(function (res) {
+        if (res.ok) {
+            return res.json();
+        }
+    }).then(function (value) {
+        window.location.replace('file:///C:/Users/kinoa/Documents/Codage/OC/P5/front/html/confirmation.html?orderId='+value.orderId);
+    });
+}
+
+
+
 
 /* début du script */
-recupererPanier();
-document.getElementById('order').addEventListener('click',verificationFormulaire);
-
+if (window.location.href == 'file:///C:/Users/kinoa/Documents/Codage/OC/P5/front/html/cart.html'){
+    document.addEventListener('DOMContentLoaded', retrieveCart());
+    document.getElementById('order').addEventListener('click',checkForm);
+}else{
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let orderId = urlParams.has("orderId") ? urlParams.get("orderId") : 'error';
+    document.getElementById('orderId').innerHTML= orderId;
+}
