@@ -33,8 +33,9 @@ async function getProduct(id){
  */
 function displayCart(list){
     let containerCart = document.getElementById('cart__items');
+    let product = "";
     list.forEach((item) => {
-        let product = item[0];
+        product = item[0];
         containerCart.innerHTML += 
             `<article class="cart__item" data-id="${product._id}">
                 <div class="cart__item__img">
@@ -143,8 +144,9 @@ function totalCalcul(){
     
 }
 
-/* Vérifie les champs afin de s'assurer l'absence d'erreurs, construit l'objet contact si la valeur est correcte. 
- * Envoie un objet contact avec les informations et le tableaux des produits à [À FAIRE]. 
+/* Vérifie les champs afin de s'assurer l'absence d'erreurs
+ * @param {EventListener} event - évènement déclenché lors du click sur le bouton d'envoi du formulaire.
+ * 
  */
 function checkForm(event){
     let inputNames = [];
@@ -200,7 +202,7 @@ function checkForm(event){
                 break;
         }
         
-        let value = document.getElementById(inputName).value;
+        let value = document.getElementById(inputName).value.trim();
         if(!pattern.test(value)){
             document.getElementById(inputName + 'ErrorMsg').innerHTML = "champ incorrect : "+ errorMsg;
             error = true;
@@ -210,7 +212,7 @@ function checkForm(event){
                 document.getElementById(inputName + 'ErrorMsg').innerHTML = '';
             }
 
-            contact[inputName]=value.trim();
+            contact[inputName]=value;
         }
     });
 
@@ -242,6 +244,11 @@ function retrieveProductIdCart(){
     return products;
 }
 
+/* Requête l'API afin de soumettre une commande. Si commande correctement enregistré renvoie un identifiant de commande.
+ * @param {Contact} contact - un objet contact {firstName, lastName, adresse, ville, email}
+ * @param {String[]} products - un tableau contenant les identifiants des produits.
+ * @return {String} - un identifiant de commande effectuée.
+ */
 function orderCart(contact, products){
     fetch(" http://localhost:3000/api/products/order", {
         method: "POST",
@@ -264,15 +271,21 @@ function orderCart(contact, products){
 }
 
 
-
-
-/* début du script */
+/* début du script 
+ * si on est sur la page cart.html on exécute la récupération du panier, sinon cela indique que nous somme sur la page confirmation.html
+ */
 if (window.location.href == 'file:///C:/Users/kinoa/Documents/Codage/OC/P5/front/html/cart.html'){
     document.addEventListener('DOMContentLoaded', retrieveCart());
     document.getElementById('order').addEventListener('click',checkForm);
-}else{
+
+} else {
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
     let orderId = urlParams.has("orderId") ? urlParams.get("orderId") : 'error';
-    document.getElementById('orderId').innerHTML= orderId;
+    if(orderId!='error'){
+        document.getElementById('orderId').innerHTML = orderId;
+        localStorage.clear();
+    }
+    
+
 }
