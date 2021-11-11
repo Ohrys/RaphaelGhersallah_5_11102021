@@ -74,6 +74,7 @@ function displayCart(list){
                 alert('La quantité doit être comprise entre 1 et 100.');
                 event.target.value = quantity;
             }else{
+                oldQuantity = quantity;
                 quantity = event.target.value;
             }
 
@@ -82,7 +83,8 @@ function displayCart(list){
 
             //2. On met à jour le prix de l'objet 
             let price = event.target.closest(".cart__item__content");
-            price.querySelector('.cart__item__content__titlePrice p').innerHTML = product.price * quantity + ' €';
+            productPrice = parseInt(price.querySelector('.cart__item__content__titlePrice p').innerHTML.split(' ')[0]) / parseInt(oldQuantity,10);
+            price.querySelector('.cart__item__content__titlePrice p').innerHTML = productPrice * quantity + ' €';
 
             //on récupère la couleur pour composer la clé de localStorage (de la forme : 'id'_'couleur')
             let color = event.target.closest('.cart__item__content');
